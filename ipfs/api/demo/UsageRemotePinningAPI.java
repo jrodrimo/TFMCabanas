@@ -1,10 +1,11 @@
 package ipfs.api.demo;
 
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Arrays;
+import java.util.Collections;
 
 import io.ipfs.multiaddr.MultiAddress;
 import io.ipfs.multihash.Multihash;
@@ -36,21 +37,22 @@ public class UsageRemotePinningAPI {
             ioe.printStackTrace();
         }
     }
+
     private void run(IPFS ipfs) throws IOException {
 
-        // Add  file to the local node
+        // Add file to the local node
         MerkleNode file = ipfs.add(new NamedStreamable.ByteArrayWrapper("file.txt", "test data".getBytes())).get(0);
         // Retrieve CID
         Multihash hash = file.hash;
 
-        //Add the service
+        // Add the service
         String serviceName = "mock";
-        ipfs.pin.remote.rmService(serviceName); //clean up if necessary
+        ipfs.pin.remote.rmService(serviceName); // clean up if necessary
         ipfs.pin.remote.addService(serviceName, "http://127.0.0.1:3000", "secret");
 
-        //List services
+        // List services
         List<Map> services = ipfs.pin.remote.lsService(true);
-        for(Map service : services) {
+        for (Map service : services) {
             System.out.println(service);
         }
 
@@ -59,14 +61,18 @@ public class UsageRemotePinningAPI {
         System.out.println(addHashResult);
 
         // List
-        List<IPFS.PinStatus> statusList = List.of(IPFS.PinStatus.values()); // all statuses
+        List<IPFS.PinStatus> statusList = Arrays.asList(IPFS.PinStatus.values()); // all statuses
         Map ls = ipfs.pin.remote.ls(serviceName, Optional.empty(), Optional.of(statusList));
         System.out.println(ls);
 
         // Remove pin from remote pinning service
-        List<IPFS.PinStatus> queued = List.of(IPFS.PinStatus.queued);
-        ipfs.pin.remote.rm(serviceName, Optional.empty(), Optional.of(queued), Optional.of(List.of(hash)));
-
+        List<IPFS.PinStatus> queued = Collections.singletonList(IPFS.PinStatus.queued);
+        ipfs.pin.remote.rm(
+                serviceName,
+                Optional.empty(),
+                Optional.of(queued),
+                Optional.of(Collections.singletonList(hash))
+        );
     }
 
     public static void main(String[] args) {
